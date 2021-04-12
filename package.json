@@ -1,0 +1,24 @@
+{
+  "name": "@bitid/digitalmatterslibrary",
+  "version": "1.0.5",
+  "description": "A library to process tcp messages from DigitalMatters Devices",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "keywords": [
+    "DigitalMatters",
+    "protocol"
+  ],
+  "author": "Shane Bowyer",
+  "license": "ISC",
+  "dependencies": {
+    "i": "^0.3.6",
+    "npm": "^7.7.6",
+    "q": "^1.5.1"
+  },
+  "devDependencies": {
+    "chai": "^4.3.4",
+    "mocha": "^8.3.2"
+  }
+}

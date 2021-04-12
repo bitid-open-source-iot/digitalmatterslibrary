@@ -1,0 +1,3 @@
+Use this library to decode the tcp flexi-protocol data which Digital Matters devices send and receive.
+
+More detail to be added to this readme soon....
