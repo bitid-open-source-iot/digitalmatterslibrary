@@ -6,8 +6,6 @@ exports.processData = async function (buf) {
     var deferred = Q.defer()
 
 
-    console.log('Digital Matter....Processing Data')
-
     try {
         let PROTOCOL = require('./lib/protocol.js')
         let driver = new PROTOCOL()
@@ -63,16 +61,12 @@ exports.processData = async function (buf) {
             response.values.TxFlag = allData.messageDetails.logReason
 
             var deviceTime = parseInt(new Date().getTime() / 1000 | 0)
-            // var time = new dates.module().compressDateGlog(new Date(deviceTime * 1000),2)
 
             response.values.time = deviceTime
 
             allData.arrFields.map(async field => {
-                console.log('field', field)
                 switch (field.fId) {
                     case (0): //GPS Data
-                        console.log('GPS', field.fIdData)
-                        // let a = 0x1C91146ED43E6
                         let gpsData = {
                             gpsUTCDateTime: field.fIdData.readUInt32LE(0),
                             latitude: field.fIdData.readInt32LE(4) / 10000000,   //155614102128
@@ -90,13 +84,11 @@ exports.processData = async function (buf) {
                         response.gpsData = gpsData
                         break
                     case (2): //Digital Data
-                        console.log('Digital Data', field.fIdData)
                         response.values.digitalsIn = field.fIdData.readUInt32LE(0) //4 bytes
                         response.values.digitalsOut = field.fIdData.readInt16LE(4) //2 bytes
                         response.values.CI8 = field.fIdData.readInt16LE(6) //2 bytes
                         break
                     case (6): //Ananlog Data
-                        console.log('Analog Data', field.fIdData)
                         for (let i = 0; i < 15; i++) {
                             if(field.fIdData[i] == 1){
                                 response.values.BATT = field.fIdData.readInt16LE(i + 1) / 1000
@@ -133,9 +125,11 @@ exports.processDate = async function (digitalMattersTime) {
     try {
 
         let timeBase = new Date('01/01/2013').getTime()
-        let timeEpoch = timeBase + digitalMattersTime
+        let timeNow = Math.floor((new Date().getTime() - timeBase) / 1000)
+        let timeBuf = Buffer.alloc(4)
+        timeBuf.writeUInt32LE(timeNow)
 
-        deferred.resolve(timeEpoch)
+        deferred.resolve(timeBuf.readUInt32LE())
     } catch (e) {
         console.error('digitalMattersFalcon2GDriver processDate Error', e)
         deferred.reject(e)

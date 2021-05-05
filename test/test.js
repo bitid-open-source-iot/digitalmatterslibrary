@@ -35,13 +35,8 @@ describe('...', function () {
             let finalBuf = Buffer.concat(Object.values(helloToDevice))
 
             response = await biTidProtocol.processData(finalBuf)
-            // biTidProtocol.processData(finalBuf, function (response) {
-            console.log('Hello Response', response)
             expect(response).to.have.property('responseToDevice')
             expect(response).to.have.property('values')
-            // },function(err){
-            //     console.log('error', err)
-            // })
         });
 
         describe('DMT Message from Device', function () {
@@ -50,9 +45,9 @@ describe('...', function () {
                     sync1: Buffer.from([0x02]), //1 bytes
                     sync2: Buffer.from([0x55]), //1 bytes
                     msgType: Buffer.from([0x04]), //1 bytes
-                    payloadLen: Buffer.from([0x3d,0x00]), //2 bytes
-                    record1Len: Buffer.from([0x3d,0x00]), //2 bytes
-                    sequenceNumber: Buffer.from([0x47,0x46,0x00,0x00]), //4 bytes
+                    payloadLen: Buffer.from([0x3d, 0x00]), //2 bytes
+                    record1Len: Buffer.from([0x3d, 0x00]), //2 bytes
+                    sequenceNumber: Buffer.from([0x47, 0x46, 0x00, 0x00]), //4 bytes
                     rtcDateTime: Buffer.from(timeBuf),  //4 bytes
                     logReason: Buffer.from([0x0b]), //1 bytes
                     fId1: Buffer.from([0x00, 0x15]), //2 bytes
@@ -60,25 +55,18 @@ describe('...', function () {
                     fId2: Buffer.from([0x02, 0x08]), //2 bytes. fId=2 Digital Data. Len 8
                     fId2Data: Buffer.from([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0A, 0x00]), //8 bytes. (DI = 0, DO = 0, Status = 0x0A = b1010 = not in trip, Vbat OK, Vext not OK, Connected to GSM)
                     fId3: Buffer.from([0x06, 0x0f]), //2 bytes. (FID=6 Analogue Data, len = 15) 
-                    fId3Data: Buffer.from([0x04 ,0x1D, 0x00, 0x01, 0xFE, 0x0F, 0x02, 0x1E, 0x00, 0x05, 0x00, 0x00, 0x03, 0xBF, 0x08]), //15 bytes. (analogue number + INT16 pairs)
+                    fId3Data: Buffer.from([0x04, 0x1D, 0x00, 0x01, 0xFE, 0x0F, 0x02, 0x1E, 0x00, 0x05, 0x00, 0x00, 0x03, 0xBF, 0x08]), //15 bytes. (analogue number + INT16 pairs)
                 }
                 let finalBuf = Buffer.concat(Object.values(messagesToDevice))
 
-                // finalBuf = Buffer.from([2, 85, 4, 61, 0, 61, 0, 180, 0, 0, 0, 109, 217, 141, 15, 11, 0, 21, 109, 217, 141, 15, 44, 139, 55, 238, 50, 4, 124, 18, 67, 0, 0, 0, 5, 93, 19, 23, 3, 2, 8, 2, 0, 0, 0, 0, 0, 2, 0, 6, 15, 1, 199, 17, 3, 37, 8, 4, 28, 0, 5, 198, 17, 6, 11, 39])
-
                 response = await biTidProtocol.processData(finalBuf)
-                // biTidProtocol.processData(finalBuf, function (response) {
-                    console.log('DMT Message Response', response)
-                    expect(response).to.not.have.property('responseToDevice')
-                    expect(response).to.have.property('arrBufAllData')
-                    expect(response).to.have.property('gpsData')
-                    expect(response.arrBufAllData[0]).to.have.property('arrFields')
-                    expect(response).to.have.property('values')
-                    expect(response.values.AI1).to.equal(4094)
-                    expect(response.values.TxFlag).to.equal(11)
-                // },function(err){
-                //     console.log('error',err)
-                // })
+                expect(response).to.not.have.property('responseToDevice')
+                expect(response).to.have.property('arrBufAllData')
+                expect(response).to.have.property('gpsData')
+                expect(response.arrBufAllData[0]).to.have.property('arrFields')
+                expect(response).to.have.property('values')
+                expect(response.values.AI1).to.equal(4094)
+                expect(response.values.TxFlag).to.equal(11)
             })
         })
 
@@ -89,7 +77,7 @@ describe('...', function () {
                     sync1: Buffer.from([0x02]), //1 bytes
                     sync2: Buffer.from([0x55]), //1 bytes
                     msgType: Buffer.from([0x05]), //1 bytes
-                    payloadLen: Buffer.from([0x00,0x00]), //2 bytes
+                    payloadLen: Buffer.from([0x00, 0x00]), //2 bytes
                 }
                 let finalBuf = Buffer.concat(Object.values(messageFromDevice))
 
@@ -97,29 +85,31 @@ describe('...', function () {
                     sync1: Buffer.from([0x02]), //1 bytes
                     sync2: Buffer.from([0x55]), //1 bytes
                     msgType: Buffer.from([0x06]), //1 bytes
-                    payloadLen: Buffer.from([0x00, 0x01]), //2 bytes
-                    commitStatus: Buffer.from([0x01])
+                    payloadLen: Buffer.from([0x01, 0x00]), //2 bytes
+                    commitStatus: Buffer.from([0x01]), //1 bytes
                 }
-        
+
 
                 response = await biTidProtocol.processData(finalBuf)
-                console.log('Commit Message Response', response)
                 expect(response).to.have.property('responseToDevice')
                 let a = response.responseToDevice.toString()
                 let b = Buffer.concat(Object.values(expectedCommitToDevice)).toString()
                 expect(a).to.equal(b)
-                console.log('story')
             })
-        })        
+        })
 
 
         describe('DM Time format', function () {
             it('what should we expect here???', async function () {
+                let timeBase = new Date('01/01/2013').getTime()
+                let timeNow = Math.floor((new Date().getTime() - timeBase) / 1000)
+                let timeBuf = Buffer.alloc(4)
+                timeBuf.writeUInt32LE(timeNow)
+        
                 response = await biTidProtocol.processDate(timeNow)
-                console.log('Commit Message Response', response)
-                expect(response).to.equal(1)
+                expect(response).to.equal(timeBuf.readUInt32LE())
             })
-        })        
+        })
 
 
     });
