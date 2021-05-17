@@ -45,8 +45,8 @@ describe('...', function () {
                     sync1: Buffer.from([0x02]), //1 bytes
                     sync2: Buffer.from([0x55]), //1 bytes
                     msgType: Buffer.from([0x04]), //1 bytes
-                    payloadLen: Buffer.from([0x3d, 0x00]), //2 bytes
-                    record1Len: Buffer.from([0x3d, 0x00]), //2 bytes
+                    payloadLen: Buffer.from([0x49, 0x00]), //2 bytes
+                    record1Len: Buffer.from([0x49, 0x00]), //2 bytes
                     sequenceNumber: Buffer.from([0x47, 0x46, 0x00, 0x00]), //4 bytes
                     rtcDateTime: Buffer.from(timeBuf),  //4 bytes
                     logReason: Buffer.from([0x0b]), //1 bytes
@@ -54,8 +54,10 @@ describe('...', function () {
                     fId1Data: Buffer.from([0x02, 0xD4, 0x84, 0x02, 0xF0, 0x43, 0xF4, 0xEC, 0x2A, 0x69, 0x09, 0x45, 0x2B, 0x00, 0x1F, 0x00, 0x05, 0x00, 0x11, 0x23, 0x03]), //2 bytes. fId=0 GPS Data, Len 21 (0x15)
                     fId2: Buffer.from([0x02, 0x08]), //2 bytes. fId=2 Digital Data. Len 8
                     fId2Data: Buffer.from([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0A, 0x00]), //8 bytes. (DI = 0, DO = 0, Status = 0x0A = b1010 = not in trip, Vbat OK, Vext not OK, Connected to GSM)
-                    fId3: Buffer.from([0x06, 0x0f]), //2 bytes. (FID=6 Analogue Data, len = 15) 
-                    fId3Data: Buffer.from([0x04, 0x1D, 0x00, 0x01, 0xFE, 0x0F, 0x02, 0x1E, 0x00, 0x05, 0x00, 0x00, 0x03, 0xBF, 0x08]), //15 bytes. (analogue number + INT16 pairs)
+                    fId6: Buffer.from([0x06, 0x0f]), //2 bytes. (FID=6 Analogue Data, len = 15) 
+                    fId6Data: Buffer.from([0x04, 0x1D, 0x00, 0x01, 0xFE, 0x0F, 0x02, 0x1E, 0x00, 0x05, 0x00, 0x00, 0x03, 0xBF, 0x08]), //15 bytes. (analogue number + INT16 pairs)
+                    fId7: Buffer.from([0x07, 0x0a]), //2 bytes. (FID=6 Analogue Data, len = 10) 
+                    fId7Data: Buffer.from([0x11, 0x01, 0x01, 0x01, 0x00, 0x12, 0x01, 0x00, 0x00, 0x00]), //10 bytes. (analogue number + INT32 pairs)
                 }
                 let finalBuf = Buffer.concat(Object.values(messagesToDevice))
 
@@ -65,7 +67,12 @@ describe('...', function () {
                 expect(response).to.have.property('gpsData')
                 expect(response.arrBufAllData[0]).to.have.property('arrFields')
                 expect(response).to.have.property('values')
-                expect(response.values.AI1).to.equal(4094)
+                expect(response.values.InternalTemperature).to.equal(22.39)
+                expect(response.values.ExternalVoltage).to.equal(0.003)
+                expect(response.values.AI17).to.equal(65793)
+                expect(response.values.AI18).to.equal(1)
+                expect(response.values.BATT).to.equal(4.094)
+                expect(response.values.SIG).to.equal(29)
                 expect(response.values.TxFlag).to.equal(11)
             })
         })

@@ -40,7 +40,9 @@ exports.processData = async function (buf) {
                 CI7: 0,
                 CI8: 0,
                 BATT: 0,
-                SIG: 0
+                SIG: 0,
+                ExternalVoltage: 0,
+                InternalTemperature: 0
             }
         }
 
@@ -88,20 +90,36 @@ exports.processData = async function (buf) {
                         response.values.digitalsOut = field.fIdData.readInt16LE(4) //2 bytes
                         response.values.CI8 = field.fIdData.readInt16LE(6) //2 bytes
                         break
-                    case (6): //Ananlog Data
-                        for (let i = 0; i < 15; i++) {
+                    case (6): //Ananlog Data 16bit
+                        for (let i = 0; i < field.fIdData.length; i++) {
                             if(field.fIdData[i] == 1){
                                 response.values.BATT = field.fIdData.readInt16LE(i + 1) / 1000
+                            }
+                            if(field.fIdData[i] == 2){
+                                response.values.ExternalVoltage = (field.fIdData.readInt16LE(i + 1) / 1000) / 10
+                            }
+                            if(field.fIdData[i] == 3){
+                                response.values.InternalTemperature = field.fIdData.readInt16LE(i + 1) / 100
                             }
                             if(field.fIdData[i] == 4){
                                 response.values.SIG = field.fIdData.readInt16LE(i + 1)
                             }
                             if (field.fIdData.readUInt8(i) > 4) {
-                                response.values[`AIExt${field.fIdData[i]}`] = field.fIdData.readInt16LE(i + 1)
-                            } else {
+                            //     response.values[`AIExt${field.fIdData[i]}`] = field.fIdData.readInt16LE(i + 1)
+                            // } else {
                                 response.values[`AI${field.fIdData[i]}`] = field.fIdData.readInt16LE(i + 1)
                             }
                             i = i + 2
+                        }
+                        break
+                    case (7): //Ananlog Data 32bit
+                        for (let i = 0; i < field.fIdData.length; i++) {
+                            try{
+                                response.values[`AI${field.fIdData[i]}`] = field.fIdData.readInt32LE(i + 1)
+                            }catch(e){
+                                console.error(`Analog Data 32 bit error for field.fIdData[i] ${field.fIdData[i]}`, e)
+                            }
+                            i = i + 4
                         }
                         break
                     default:
