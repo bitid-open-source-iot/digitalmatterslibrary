@@ -22,24 +22,11 @@ eg:
                     AI2: 30,
                     AI3: 2239,
                     AI4: 29,
-                    AIExt1: 0,
-                    AIExt2: 0,
-                    AIExt3: 0,
-                    AIExt4: 0,
-                    AIExt5: 0,
-                    AIExt6: 0,
-                    AIExt7: 0,
-                    AIExt8: 0,
-                    CI1: 0,
-                    CI2: 0,
-                    CI3: 0,
-                    CI4: 0,
-                    CI5: 0,
-                    CI6: 0,
-                    CI7: 0,
-                    CI8: 10,
+                    AI...........(depending on what the unit is configured to send)
                     BATT: 4.094,
-                    SIG: 29
+                    SIG: 29,
+                    InternalTemperature: 29,
+                    ExternalVoltage: 5
                 }
 
 
