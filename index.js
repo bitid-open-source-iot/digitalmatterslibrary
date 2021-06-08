@@ -1,3 +1,4 @@
+const { reporters } = require('mocha');
 const { async } = require('q');
 var Q = require('q');
 
@@ -58,15 +59,17 @@ exports.processData = async function (buf) {
 
 
         let bFound = false
-        let arrResponses = []
+        let arrShapedData = []
         if(response.arrBufAllData?.length > 0){
             response.arrBufAllData.map((async allData => {
                 bFound = true
-                response.values.TxFlag = allData.messageDetails.logReason
+                let shapedData = {
+                    values: {}
+                }
+                shapedData.values.TxFlag = allData.messageDetails.logReason
     
-                // var deviceTime = parseInt(new Date().getTime() / 1000 | 0)
-    
-                response.values.time = allData.messageDetails.deviceTime
+                shapedData.values.time = allData.messageDetails.deviceTime
+                shapedData.values.sequenceNumber = allData.messageDetails.sequenceNumber
     
                 allData.arrFields.map(async field => {
                     switch (field.fId) {
@@ -85,31 +88,31 @@ exports.processData = async function (buf) {
                             }
                             // gpsData.gpsUTCDateTime = await processData(gpsData.gpsUTCDateTime)
                             gpsData.gpsUTCDateTime = new Date()
-                            response.gpsData = gpsData
+                            shapedData.values.gpsData = gpsData
                             break
                         case (2): //Digital Data
-                            response.values.digitalsIn = field.fIdData.readUInt32LE(0) //4 bytes
-                            response.values.digitalsOut = field.fIdData.readInt16LE(4) //2 bytes
-                            response.values.CI8 = field.fIdData.readInt16LE(6) //2 bytes
+                            shapedData.values.digitalsIn = field.fIdData.readUInt32LE(0) //4 bytes
+                            shapedData.values.digitalsOut = field.fIdData.readInt16LE(4) //2 bytes
+                            shapedData.values.CI8 = field.fIdData.readInt16LE(6) //2 bytes
                             break
                         case (6): //Ananlog Data 16bit
                             for (let i = 0; i < field.fIdData.length; i++) {
                                 if(field.fIdData[i] == 1){
-                                    response.values.BATT = field.fIdData.readInt16LE(i + 1) / 1000
+                                    shapedData.values.BATT = field.fIdData.readInt16LE(i + 1) / 1000
                                 }
                                 if(field.fIdData[i] == 2){
-                                    response.values.ExternalVoltage = (field.fIdData.readInt16LE(i + 1) / 1000) / 10
+                                    shapedData.values.ExternalVoltage = (field.fIdData.readInt16LE(i + 1) / 1000) / 10
                                 }
                                 if(field.fIdData[i] == 3){
-                                    response.values.InternalTemperature = field.fIdData.readInt16LE(i + 1) / 100
+                                    shapedData.values.InternalTemperature = field.fIdData.readInt16LE(i + 1) / 100
                                 }
                                 if(field.fIdData[i] == 4){
-                                    response.values.SIG = field.fIdData.readInt16LE(i + 1)
+                                    shapedData.values.SIG = field.fIdData.readInt16LE(i + 1)
                                 }
                                 if (field.fIdData.readUInt8(i) > 4) {
-                                //     response.values[`AIExt${field.fIdData[i]}`] = field.fIdData.readInt16LE(i + 1)
+                                //     shapedData.values[`AIExt${field.fIdData[i]}`] = field.fIdData.readInt16LE(i + 1)
                                 // } else {
-                                    response.values[`AI${field.fIdData[i]}`] = field.fIdData.readInt16LE(i + 1)
+                                    shapedData.values[`AI${field.fIdData[i]}`] = field.fIdData.readInt16LE(i + 1)
                                 }
                                 i = i + 2
                             }
@@ -117,7 +120,7 @@ exports.processData = async function (buf) {
                         case (7): //Ananlog Data 32bit
                             for (let i = 0; i < field.fIdData.length; i++) {
                                 try{
-                                    response.values[`AI${field.fIdData[i]}`] = field.fIdData.readInt32LE(i + 1)
+                                    shapedData.values[`AI${field.fIdData[i]}`] = field.fIdData.readInt32LE(i + 1)
                                 }catch(e){
                                     console.error(`Analog Data 32 bit error for field.fIdData[i] ${field.fIdData[i]}`, e)
                                 }
@@ -128,11 +131,12 @@ exports.processData = async function (buf) {
                             console.error('digitalMattersFalcon2GDriver Unhandled splitMultipleRecordsData case fId', fId)
                     }
                 })
-                arrResponses.push(response)
+                arrShapedData.push(shapedData)
             }))
-            deferred.resolve(arrResponses)
+            response.arrShapedData = arrShapedData
+            deferred.resolve(response)
         }else{
-            deferred.resolve([response])
+            deferred.resolve(response)
         }
     } catch (e) {
         console.error('digitalMattersFalcon2GDriver processData Error', e)
