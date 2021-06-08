@@ -58,77 +58,82 @@ exports.processData = async function (buf) {
 
 
         let bFound = false
-        response.arrBufAllData.map((async allData => {
-            bFound = true
-            response.values.TxFlag = allData.messageDetails.logReason
-
-            var deviceTime = parseInt(new Date().getTime() / 1000 | 0)
-
-            response.values.time = deviceTime
-
-            allData.arrFields.map(async field => {
-                switch (field.fId) {
-                    case (0): //GPS Data
-                        let gpsData = {
-                            gpsUTCDateTime: field.fIdData.readUInt32LE(0),
-                            latitude: field.fIdData.readInt32LE(4) / 10000000,   //155614102128
-                            longitude: field.fIdData.readInt32LE(8) / 10000000,
-                            altitude: field.fIdData.readInt16LE(12),
-                            groundSpeed2D: field.fIdData.readUInt16LE(14),
-                            speedAccuracyEstimate: field.fIdData.readUInt8(16),
-                            heading2d: field.fIdData.readUInt8(17),
-                            PDOP: field.fIdData.readUInt8(18),
-                            positionAccuracyEstimate: field.fIdData.readUInt8(19),
-                            gpsStatusFlags: field.fIdData.readUInt8(20),
-                        }
-                        // gpsData.gpsUTCDateTime = await processData(gpsData.gpsUTCDateTime)
-                        gpsData.gpsUTCDateTime = new Date()
-                        response.gpsData = gpsData
-                        break
-                    case (2): //Digital Data
-                        response.values.digitalsIn = field.fIdData.readUInt32LE(0) //4 bytes
-                        response.values.digitalsOut = field.fIdData.readInt16LE(4) //2 bytes
-                        response.values.CI8 = field.fIdData.readInt16LE(6) //2 bytes
-                        break
-                    case (6): //Ananlog Data 16bit
-                        for (let i = 0; i < field.fIdData.length; i++) {
-                            if(field.fIdData[i] == 1){
-                                response.values.BATT = field.fIdData.readInt16LE(i + 1) / 1000
+        let arrResponses = []
+        if(response.arrBufAllData?.length > 0){
+            response.arrBufAllData.map((async allData => {
+                bFound = true
+                response.values.TxFlag = allData.messageDetails.logReason
+    
+                // var deviceTime = parseInt(new Date().getTime() / 1000 | 0)
+    
+                response.values.time = allData.messageDetails.deviceTime
+    
+                allData.arrFields.map(async field => {
+                    switch (field.fId) {
+                        case (0): //GPS Data
+                            let gpsData = {
+                                gpsUTCDateTime: field.fIdData.readUInt32LE(0),
+                                latitude: field.fIdData.readInt32LE(4) / 10000000,   //155614102128
+                                longitude: field.fIdData.readInt32LE(8) / 10000000,
+                                altitude: field.fIdData.readInt16LE(12),
+                                groundSpeed2D: field.fIdData.readUInt16LE(14),
+                                speedAccuracyEstimate: field.fIdData.readUInt8(16),
+                                heading2d: field.fIdData.readUInt8(17),
+                                PDOP: field.fIdData.readUInt8(18),
+                                positionAccuracyEstimate: field.fIdData.readUInt8(19),
+                                gpsStatusFlags: field.fIdData.readUInt8(20),
                             }
-                            if(field.fIdData[i] == 2){
-                                response.values.ExternalVoltage = (field.fIdData.readInt16LE(i + 1) / 1000) / 10
+                            // gpsData.gpsUTCDateTime = await processData(gpsData.gpsUTCDateTime)
+                            gpsData.gpsUTCDateTime = new Date()
+                            response.gpsData = gpsData
+                            break
+                        case (2): //Digital Data
+                            response.values.digitalsIn = field.fIdData.readUInt32LE(0) //4 bytes
+                            response.values.digitalsOut = field.fIdData.readInt16LE(4) //2 bytes
+                            response.values.CI8 = field.fIdData.readInt16LE(6) //2 bytes
+                            break
+                        case (6): //Ananlog Data 16bit
+                            for (let i = 0; i < field.fIdData.length; i++) {
+                                if(field.fIdData[i] == 1){
+                                    response.values.BATT = field.fIdData.readInt16LE(i + 1) / 1000
+                                }
+                                if(field.fIdData[i] == 2){
+                                    response.values.ExternalVoltage = (field.fIdData.readInt16LE(i + 1) / 1000) / 10
+                                }
+                                if(field.fIdData[i] == 3){
+                                    response.values.InternalTemperature = field.fIdData.readInt16LE(i + 1) / 100
+                                }
+                                if(field.fIdData[i] == 4){
+                                    response.values.SIG = field.fIdData.readInt16LE(i + 1)
+                                }
+                                if (field.fIdData.readUInt8(i) > 4) {
+                                //     response.values[`AIExt${field.fIdData[i]}`] = field.fIdData.readInt16LE(i + 1)
+                                // } else {
+                                    response.values[`AI${field.fIdData[i]}`] = field.fIdData.readInt16LE(i + 1)
+                                }
+                                i = i + 2
                             }
-                            if(field.fIdData[i] == 3){
-                                response.values.InternalTemperature = field.fIdData.readInt16LE(i + 1) / 100
+                            break
+                        case (7): //Ananlog Data 32bit
+                            for (let i = 0; i < field.fIdData.length; i++) {
+                                try{
+                                    response.values[`AI${field.fIdData[i]}`] = field.fIdData.readInt32LE(i + 1)
+                                }catch(e){
+                                    console.error(`Analog Data 32 bit error for field.fIdData[i] ${field.fIdData[i]}`, e)
+                                }
+                                i = i + 4
                             }
-                            if(field.fIdData[i] == 4){
-                                response.values.SIG = field.fIdData.readInt16LE(i + 1)
-                            }
-                            if (field.fIdData.readUInt8(i) > 4) {
-                            //     response.values[`AIExt${field.fIdData[i]}`] = field.fIdData.readInt16LE(i + 1)
-                            // } else {
-                                response.values[`AI${field.fIdData[i]}`] = field.fIdData.readInt16LE(i + 1)
-                            }
-                            i = i + 2
-                        }
-                        break
-                    case (7): //Ananlog Data 32bit
-                        for (let i = 0; i < field.fIdData.length; i++) {
-                            try{
-                                response.values[`AI${field.fIdData[i]}`] = field.fIdData.readInt32LE(i + 1)
-                            }catch(e){
-                                console.error(`Analog Data 32 bit error for field.fIdData[i] ${field.fIdData[i]}`, e)
-                            }
-                            i = i + 4
-                        }
-                        break
-                    default:
-                        console.error('digitalMattersFalcon2GDriver Unhandled splitMultipleRecordsData case fId', fId)
-                }
-
-            })
-        }))
-        deferred.resolve(response)
+                            break
+                        default:
+                            console.error('digitalMattersFalcon2GDriver Unhandled splitMultipleRecordsData case fId', fId)
+                    }
+                })
+                arrResponses.push(response)
+            }))
+            deferred.resolve(arrResponses)
+        }else{
+            deferred.resolve([response])
+        }
     } catch (e) {
         console.error('digitalMattersFalcon2GDriver processData Error', e)
         deferred.reject(e)
@@ -137,19 +142,17 @@ exports.processData = async function (buf) {
     return deferred.promise
 }
 
-exports.processDate = async function (digitalMattersTime) {
+exports.processTime = async function (digitalMattersTS) {
     var deferred = Q.defer()
 
+    let PROTOCOL = require('./lib/protocol.js')
+    let driver = new PROTOCOL()
+
     try {
-
-        let timeBase = new Date('01/01/2013').getTime()
-        let timeNow = Math.floor((new Date().getTime() - timeBase) / 1000)
-        let timeBuf = Buffer.alloc(4)
-        timeBuf.writeUInt32LE(timeNow)
-
-        deferred.resolve(timeBuf.readUInt32LE())
+        let dmDate = await driver.processTime(digitalMattersTS)
+        deferred.resolve(dmDate)
     } catch (e) {
-        console.error('digitalMattersFalcon2GDriver processDate Error', e)
+        console.error('digitalMattersFalcon2GDriver processTime Error', e)
         deferred.reject(e)
     }
 
