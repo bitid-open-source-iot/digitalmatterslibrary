@@ -128,7 +128,7 @@ exports.processData = async function (buf) {
                             }
                             break
                         default:
-                            console.error('digitalMattersFalcon2GDriver Unhandled splitMultipleRecordsData case fId', fId)
+                            console.error('digitalMattersFalcon2GDriver Unhandled splitMultipleRecordsData case fId', field.fId)
                     }
                 })
                 arrShapedData.push(shapedData)
