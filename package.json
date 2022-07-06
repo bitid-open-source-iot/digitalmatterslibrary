@@ -1,6 +1,6 @@
 {
   "name": "@bitid/digitalmatterslibrary",
-  "version": "1.0.13",
+  "version": "2.0.1",
   "description": "A library to process tcp messages from DigitalMatters Devices",
   "main": "index.js",
   "scripts": {
